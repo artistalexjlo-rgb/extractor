@@ -174,6 +174,27 @@
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
 
+        async function sendToBot(blob, filename) {
+            const formData = new FormData();
+            formData.append('photo', blob, filename);
+            formData.append('chat_id', tg.initDataUnsafe?.user?.id || '');
+            
+            try {
+                const response = await fetch('https://first-cx50.onrender.com/send_frame', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (response.ok) {
+                    console.log('Sent to bot successfully');
+                } else {
+                    console.error('Failed to send to bot');
+                }
+            } catch(e) {
+                console.error('Error sending to bot:', e);
+            }
+        }
+
         function dataURItoBlob(dataURI) {
             var byteString = atob(dataURI.split(',')[1]);
             var mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
@@ -244,6 +265,9 @@
                         const imageFile = new File([blob], `first_${baseName}.jpg`, { type: 'image/jpeg' });
                         const blobUrl = URL.createObjectURL(blob);
                         displayResult(blobUrl, `Первый кадр`, imageFile);
+                        
+                        // Отправляем боту
+                        await sendToBot(blob, `first_${baseName}.jpg`);
                     }
 
                     if (saveLast) {
@@ -257,6 +281,9 @@
                         const imageFile = new File([blob], `last_${baseName}.jpg`, { type: 'image/jpeg' });
                         const blobUrl = URL.createObjectURL(blob);
                         displayResult(blobUrl, `Последний кадр`, imageFile);
+                        
+                        // Отправляем боту
+                        await sendToBot(blob, `last_${baseName}.jpg`);
                     }
                     URL.revokeObjectURL(video.src);
                     resolve();
