@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Frame Extractor App</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Telegram SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        ::-webkit-scrollbar { width: 0px; background: transparent; }
+        .active-btn { transform: scale(0.98); opacity: 0.9; }
+        
+        /* Анимация пульсации для кнопки старта */
+        @keyframes pulse-ring {
+            0% { transform: scale(0.8); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
+            100% { transform: scale(0.8); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+        }
+        .pulse-btn {
+            animation: pulse-ring 2s infinite;
+        }
+
+        /* Анимация стрелки */
+        @keyframes bounce-x {
+            0%, 100% { transform: translateX(-25%); animation-timing-function: cubic-bezier(0.8, 0, 1, 1); }
+            50% { transform: translateX(0); animation-timing-function: cubic-bezier(0, 0, 0.2, 1); }
+        }
+        .animate-bounce-x {
+            animation: bounce-x 1s infinite;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 min-h-screen text-slate-800 overflow-hidden">
+
+    <!-- === ЭКРАН "ВХОДА" (Start Screen) === -->
+    <div id="startScreen" class="fixed inset-0 z-[100] bg-slate-900 flex flex-col items-center justify-center p-6 text-center transition-opacity duration-500">
+        
+        <!-- НАЗВАНИЕ УТИЛИТЫ -->
+        <div class="mb-6">
+            <h1 class="text-4xl font-black text-white tracking-tighter uppercase leading-none">
+                Frame <br><span class="text-blue-500">Extractor</span>
+            </h1>
+            <div class="h-1 w-16 bg-blue-600 mx-auto mt-4 rounded-full"></div>
+            <p class="text-slate-500 text-xs font-mono mt-3 tracking-widest uppercase">Professional Tool v2.6</p>
+        </div>
+
+        <!-- Блок Win-Win (Упрощенный текст) -->
+        <div class="mb-6 max-w-xs bg-slate-800/50 p-5 rounded-2xl backdrop-blur-sm border border-slate-700/50">
+            <h2 class="text-xl font-bold text-white mb-3">Win-Win 🤝</h2>
+            <p class="text-slate-300 text-sm leading-relaxed mb-4">
+                Утилита полностью бесплатная.
+            </p>
+            <div class="text-slate-300 text-xs bg-slate-900/80 p-3 rounded-xl border border-slate-700/50 text-left">
+                🎧 <span class="font-bold text-white">Просто послушайте трек.</span><br>
+                Мы включим музыку фоном, пока вы работаете с видео.
+            </div>
+        </div>
+        
+        <button id="startBtn" class="bg-blue-600 text-white rounded-full w-20 h-20 flex items-center justify-center shadow-2xl shadow-blue-500/50 pulse-btn active:scale-95 transition-transform mt-2">
+            <svg class="w-8 h-8 ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+        </button>
+        
+        <p class="text-slate-500 text-[10px] mt-6 uppercase tracking-widest opacity-60">Start & Support</p>
+    </div>
+
+
+    <!-- === ОСНОВНОЙ ИНТЕРФЕЙС === -->
+    <div id="mainApp" class="opacity-0 transition-opacity duration-700 min-h-screen">
+        
+        <!-- Верхняя шапка -->
+        <div class="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-200 px-4 py-3 shadow-sm flex items-center justify-between">
+            <h1 class="font-bold text-lg text-slate-900">Frame Extractor</h1>
+            <div class="flex items-center space-x-1">
+                <span class="relative flex h-2 w-2">
+                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                  <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                </span>
+                <span class="text-xs text-slate-400 font-mono">Online</span>
+            </div>
+        </div>
+
+        <div class="p-4 pb-24 max-w-md mx-auto relative">
+            
+            <!-- ПЛЕЕР -->
+            <div id="musicContainer" class="bg-black rounded-t-2xl overflow-hidden shadow-lg border-x border-t border-slate-800 relative min-h-[150px] z-10">
+                <div class="absolute inset-0 flex items-center justify-center text-slate-600 text-xs flex-col gap-2">
+                    <svg class="animate-spin h-5 w-5 text-slate-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span>Соединение с космосом...</span>
+                </div>
+            </div>
+            <!-- Доп. панель под плеером с прямой ссылкой -->
+            <div class="bg-slate-900 rounded-b-2xl border-x border-b border-slate-800 p-2 flex justify-between items-center mb-6 shadow-lg">
+                <div class="text-[10px] text-slate-400 pl-2">TerraVibe — Запах моря</div>
+                <a id="externalLink" href="#" target="_blank" class="text-[10px] bg-slate-800 hover:bg-slate-700 text-blue-400 px-3 py-1 rounded-full transition-colors flex items-center gap-1">
+                    <span>Полная версия</span>
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                </a>
+            </div>
+
+            <!-- Подсказка "Жми Play" -->
+            <div id="playHint" class="hidden flex items-center justify-center space-x-2 text-blue-600 text-xs font-bold mb-6 animate-pulse">
+                <span>👆 Если тишина — жми Play (даже 30 сек в зачет!)</span>
+            </div>
+
+            <!-- Настройки -->
+            <div class="bg-white rounded-xl p-4 shadow-sm mb-4">
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Настройки извлечения</h3>
+                <div class="flex flex-col gap-3">
+                    <label class="flex items-center justify-between p-3 bg-slate-50 rounded-lg active:bg-slate-100 transition-colors cursor-pointer group">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs">1</div>
+                            <span class="font-semibold text-slate-700">Первый кадр</span>
+                        </div>
+                        <div class="relative inline-block w-12 mr-2 align-middle select-none">
+                            <input type="checkbox" id="checkFirst" checked class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer border-blue-500 checked:right-0 right-6 transition-all duration-200"/>
+                            <span class="toggle-label block overflow-hidden h-6 rounded-full bg-blue-500 cursor-pointer"></span>
+                        </div>
+                    </label>
+                    <label class="flex items-center justify-between p-3 bg-slate-50 rounded-lg active:bg-slate-100 transition-colors cursor-pointer group">
+                         <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center font-bold text-xs">END</div>
+                            <span class="font-semibold text-slate-700">Последний кадр</span>
+                        </div>
+                        <div class="relative inline-block w-12 mr-2 align-middle select-none">
+                            <input type="checkbox" id="checkLast" checked class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer border-blue-500 checked:right-0 right-6 transition-all duration-200"/>
+                            <span class="toggle-label block overflow-hidden h-6 rounded-full bg-blue-500 cursor-pointer"></span>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Кнопка загрузки -->
+            <div id="uploadBtn" class="bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white rounded-2xl p-8 text-center shadow-blue-200 shadow-xl cursor-pointer transition-transform active:scale-95 mb-6 relative overflow-hidden group">
+                <div class="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <svg class="w-12 h-12 mx-auto mb-3 opacity-90 drop-shadow-md" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                <div class="text-xl font-bold tracking-tight">Загрузить видео</div>
+                <div class="text-blue-100 text-xs mt-1 opacity-80">mp4, mov, avi</div>
+                <input type="file" id="fileInput" multiple accept="video/*" class="hidden">
+            </div>
+
+            <!-- Статус -->
+            <div id="statusArea" class="text-center text-xs text-slate-400 min-h-[20px] font-medium">
+                Ожидание выбора файла...
+            </div>
+        </div>
+    </div>
+
+    <!-- Canvas -->
+    <canvas id="canvas" class="hidden"></canvas>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        try { tg.expand(); } catch(e) {}
+
+        const startScreen = document.getElementById('startScreen');
+        const mainApp = document.getElementById('mainApp');
+        const startBtn = document.getElementById('startBtn');
+        const musicContainer = document.getElementById('musicContainer');
+        const playHint = document.getElementById('playHint');
+        const externalLink = document.getElementById('externalLink');
+
+        const YANDEX_TRACK_ID = '144325888';
+        const YANDEX_ALBUM_ID = '38804247';
+        
+        // Ссылка на "Полную версию" (Ведет на альбом в вебе, где можно залогиниться)
+        externalLink.href = `https://music.yandex.ru/album/${YANDEX_ALBUM_ID}/track/${YANDEX_TRACK_ID}`;
+
+        startBtn.addEventListener('click', () => {
+            if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('heavy');
+
+            startScreen.style.opacity = '0';
+            setTimeout(() => {
+                startScreen.style.display = 'none';
+                document.body.style.overflow = 'auto'; 
+                playHint.classList.remove('hidden');
+            }, 500);
+
+            mainApp.classList.remove('opacity-0');
+
+            const iframe = document.createElement('iframe');
+            iframe.style.border = 'none';
+            iframe.style.width = '100%';
+            iframe.style.height = '150px';
+            iframe.setAttribute('frameborder', '0');
+            iframe.setAttribute('allow', 'autoplay; encrypted-media; fullscreen; clipboard-write; scripts');
+            
+            // Пробуем запустить
+            iframe.src = `https://music.yandex.ru/iframe/album/${YANDEX_ALBUM_ID}/track/${YANDEX_TRACK_ID}?autoplay=1&play=true`;
+            
+            musicContainer.innerHTML = '';
+            musicContainer.appendChild(iframe);
+        });
+
+        // --- ЛОГИКА ПРИЛОЖЕНИЯ ---
+        const uploadBtn = document.getElementById('uploadBtn');
+        const fileInput = document.getElementById('fileInput');
+        const statusArea = document.getElementById('statusArea');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        function setStatus(msg, isError = false) {
+            statusArea.textContent = msg;
+            statusArea.style.color = isError ? '#ef4444' : '#94a3b8';
+            if (!isError && msg.includes('Обработка')) statusArea.style.color = '#3b82f6';
+        }
+
+        uploadBtn.addEventListener('click', () => {
+            if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+            fileInput.click();
+        });
+
+        fileInput.addEventListener('change', async function() {
+            if (this.files.length > 0) {
+                await processFiles(this.files);
+                this.value = ''; 
+            }
+        });
+
+        async function processFiles(files) {
+            const saveFirst = document.getElementById('checkFirst').checked;
+            const saveLast = document.getElementById('checkLast').checked;
+
+            if (!saveFirst && !saveLast) {
+                setStatus("Выберите хотя бы одну опцию!", true);
+                if(tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
+                return;
+            }
+
+            for (let i = 0; i < files.length; i++) {
+                await processVideo(files[i], saveFirst, saveLast);
+            }
+            setStatus("Все готово! ✅");
+            if(tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+        }
+
+        function processVideo(file, saveFirst, saveLast) {
+            return new Promise((resolve) => {
+                setStatus(`Обработка: ${file.name}...`);
+                const video = document.createElement('video');
+                video.preload = 'metadata';
+                video.src = URL.createObjectURL(file);
+                video.muted = true;
+                video.playsInline = true;
+
+                video.onloadedmetadata = async function() {
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    const baseName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
+
+                    if (saveFirst) {
+                        video.currentTime = 0.1;
+                        await new Promise(r => video.onseeked = r);
+                        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                        downloadImage(canvas, `first_${baseName}.jpg`);
+                    }
+
+                    if (saveLast) {
+                        let targetTime = Math.max(0, video.duration - 0.1); 
+                        if (!isFinite(targetTime)) targetTime = 0;
+                        video.currentTime = targetTime;
+                        await new Promise(r => video.onseeked = r);
+                        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                        downloadImage(canvas, `last_${baseName}.jpg`);
+                    }
+                    URL.revokeObjectURL(video.src);
+                    resolve();
+                };
+
+                video.onerror = function() {
+                    setStatus(`Ошибка формата: ${file.name}`, true);
+                    resolve();
+                };
+            });
+        }
+
+        function downloadImage(canvas, filename) {
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = canvas.toDataURL('image/jpeg', 0.9);
+            link.click();
+        }
+    </script>
+</body>
+</html>
