@@ -303,28 +303,39 @@
             });
         }
 
-        function displayResult(blobUrl, title, fileObject) {
-            const container = document.createElement('div');
-            container.className = 'bg-white p-2 rounded-lg shadow-sm border border-slate-200 flex flex-col items-center animate-bounce-x active:scale-95 transition-transform cursor-pointer';
-            container.style.animation = 'none'; 
-            
-            const img = document.createElement('img');
-            img.src = blobUrl;
-            img.className = 'w-full h-auto rounded mb-2 object-cover aspect-video bg-slate-100 pointer-events-none'; // pointer-events-none чтобы клик шел на контейнер
-            
-            const label = document.createElement('div');
-            label.className = 'text-[10px] text-slate-500 font-mono truncate w-full text-center';
-            label.textContent = title;
+       function displayResult(blobUrl, title, fileObject) {
+    const container = document.createElement('div');
+    container.className = 'bg-white p-2 rounded-lg shadow-sm border border-slate-200 flex flex-col items-center';
+    
+    const img = document.createElement('img');
+    img.src = blobUrl;
+    img.className = 'w-full h-auto rounded mb-2 object-cover aspect-video bg-slate-100';
+    
+    const label = document.createElement('div');
+    label.className = 'text-[10px] text-slate-500 font-mono truncate w-full text-center mb-2';
+    label.textContent = title;
 
-            // Клик открывает модальное окно
-            container.onclick = () => {
-                openModal(blobUrl, fileObject);
-            };
-
-            container.appendChild(img);
-            container.appendChild(label);
-            resultsGrid.appendChild(container);
+    // Кнопка "Сохранить"
+    const saveBtn = document.createElement('button');
+    saveBtn.className = 'w-full bg-blue-600 text-white py-2 px-3 rounded-lg text-xs font-bold active:scale-95 transition-transform';
+    saveBtn.textContent = '💾 Сохранить';
+    saveBtn.onclick = async () => {
+        if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+        try {
+            await navigator.share({
+                files: [fileObject],
+                title: title
+            });
+        } catch(e) {
+            console.log('Share cancelled or failed');
         }
+    };
+
+    container.appendChild(img);
+    container.appendChild(label);
+    container.appendChild(saveBtn);
+    resultsGrid.appendChild(container);
+}
 
         // --- ЛОГИКА МОДАЛЬНОГО ОКНА ---
         function openModal(url, fileObj) {
@@ -373,3 +384,4 @@
     </script>
 </body>
 </html>
+
