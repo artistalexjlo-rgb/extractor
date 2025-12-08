@@ -283,30 +283,28 @@
             container.appendChild(img);
             container.appendChild(label);
 
-            // Проверка платформы
-            const isAndroid = tg.platform === 'android' || /android/i.test(navigator.userAgent);
+            // Определяем Android
+            const isAndroid = /android/i.test(navigator.userAgent);
             
             if (isAndroid) {
-                // Для Android - кнопка
+                // Android - кнопка share
                 const saveBtn = document.createElement('button');
                 saveBtn.className = 'w-full bg-blue-600 text-white py-2 px-3 rounded-lg text-xs font-bold active:scale-95 transition-transform';
                 saveBtn.textContent = '💾 Сохранить';
                 saveBtn.onclick = async () => {
                     if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
-                    if (navigator.share && navigator.canShare && navigator.canShare({files: [fileObject]})) {
-                        try {
-                            await navigator.share({
-                                files: [fileObject],
-                                title: title
-                            });
-                        } catch(e) {
-                            console.log('Share failed:', e);
-                        }
+                    try {
+                        await navigator.share({
+                            files: [fileObject],
+                            title: title
+                        });
+                    } catch(e) {
+                        console.log('Share failed:', e);
                     }
                 };
                 container.appendChild(saveBtn);
             } else {
-                // Для Desktop - автоматическая загрузка
+                // Desktop/iOS - автосохранение
                 const a = document.createElement('a');
                 a.href = blobUrl;
                 a.download = fileObject.name;
