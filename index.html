@@ -15,65 +15,74 @@
         ::-webkit-scrollbar { width: 0px; background: transparent; }
         .active-btn { transform: scale(0.98); opacity: 0.9; }
         
-        /* Анимация пульсации для кнопки старта */
         @keyframes pulse-ring {
             0% { transform: scale(0.8); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
             70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
             100% { transform: scale(0.8); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
         }
-        .pulse-btn {
-            animation: pulse-ring 2s infinite;
-        }
-
-        /* Анимация стрелки */
+        .pulse-btn { animation: pulse-ring 2s infinite; }
         @keyframes bounce-x {
             0%, 100% { transform: translateX(-25%); animation-timing-function: cubic-bezier(0.8, 0, 1, 1); }
             50% { transform: translateX(0); animation-timing-function: cubic-bezier(0, 0, 0.2, 1); }
         }
-        .animate-bounce-x {
-            animation: bounce-x 1s infinite;
-        }
+        .animate-bounce-x { animation: bounce-x 1s infinite; }
+        
+        /* Стили для модального окна */
+        .modal-enter { opacity: 0; transform: scale(0.95); }
+        .modal-enter-active { opacity: 1; transform: scale(1); transition: opacity 300ms, transform 300ms; }
+        .modal-exit { opacity: 1; transform: scale(1); }
+        .modal-exit-active { opacity: 0; transform: scale(0.95); transition: opacity 300ms, transform 300ms; }
     </style>
 </head>
-<body class="bg-slate-100 min-h-screen text-slate-800 overflow-hidden">
+<body class="bg-slate-100 min-h-screen text-slate-800 overflow-hidden select-none">
 
-    <!-- === ЭКРАН "ВХОДА" (Start Screen) === -->
-    <div id="startScreen" class="fixed inset-0 z-[100] bg-slate-900 flex flex-col items-center justify-center p-6 text-center transition-opacity duration-500">
-        
-        <!-- НАЗВАНИЕ УТИЛИТЫ -->
+    <!-- === ЭКРАН "ВХОДА" === -->
+    <div id="startScreen" class="fixed inset-0 z-[50] bg-slate-900 flex flex-col items-center justify-center p-6 text-center transition-opacity duration-500">
         <div class="mb-6">
             <h1 class="text-4xl font-black text-white tracking-tighter uppercase leading-none">
                 Frame <br><span class="text-blue-500">Extractor</span>
             </h1>
             <div class="h-1 w-16 bg-blue-600 mx-auto mt-4 rounded-full"></div>
-            <p class="text-slate-500 text-xs font-mono mt-3 tracking-widest uppercase">Professional Tool v2.9</p>
+            <p class="text-slate-500 text-xs font-mono mt-3 tracking-widest uppercase">Professional Tool v3.0</p>
         </div>
-
-        <!-- Блок Win-Win (Упрощенный текст) -->
         <div class="mb-6 max-w-xs bg-slate-800/50 p-5 rounded-2xl backdrop-blur-sm border border-slate-700/50">
             <h2 class="text-xl font-bold text-white mb-3">Win-Win 🤝</h2>
-            <p class="text-slate-300 text-sm leading-relaxed mb-4">
-                Утилита полностью бесплатная.
-            </p>
             <div class="text-slate-300 text-xs bg-slate-900/80 p-3 rounded-xl border border-slate-700/50 text-left">
                 🎧 <span class="font-bold text-white">Просто послушайте трек.</span><br>
                 Мы включим музыку фоном, пока вы работаете с видео.
             </div>
         </div>
-        
         <button id="startBtn" class="bg-blue-600 text-white rounded-full w-20 h-20 flex items-center justify-center shadow-2xl shadow-blue-500/50 pulse-btn active:scale-95 transition-transform mt-2">
             <svg class="w-8 h-8 ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
         </button>
-        
-        <p class="text-slate-500 text-[10px] mt-6 uppercase tracking-widest opacity-60">Start & Support</p>
+        <p class="text-slate-500 text-[10px] mt-6 uppercase tracking-widest opacity-60">Нажмите Play</p>
     </div>
 
+    <!-- === МОДАЛЬНОЕ ОКНО ПРОСМОТРА (Галерея) === -->
+    <div id="imageModal" class="fixed inset-0 z-[60] bg-black/95 flex flex-col items-center justify-center hidden opacity-0 transition-opacity duration-300">
+        <!-- Кнопка закрытия -->
+        <button id="closeModal" class="absolute top-4 right-4 text-white/70 hover:text-white z-[70] p-2">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+        
+        <!-- Контейнер картинки -->
+        <div class="relative w-full h-full flex items-center justify-center p-4">
+            <img id="modalImage" src="" class="max-h-full max-w-full object-contain rounded shadow-2xl" alt="Full size">
+        </div>
+
+        <!-- Панель действий -->
+        <div class="absolute bottom-8 left-0 right-0 px-6 text-center">
+            <p class="text-white/50 text-xs mb-4 animate-pulse">👇 Удерживайте палец на фото, чтобы сохранить</p>
+            <button id="modalShareBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full shadow-lg active:scale-95 transition-transform w-full max-w-xs mx-auto flex items-center justify-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
+                Поделиться / Share
+            </button>
+        </div>
+    </div>
 
     <!-- === ОСНОВНОЙ ИНТЕРФЕЙС === -->
     <div id="mainApp" class="opacity-0 transition-opacity duration-700 min-h-screen overflow-y-auto">
-        
-        <!-- Верхняя шапка -->
-        <div class="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-200 px-4 py-3 shadow-sm flex items-center justify-between">
+        <div class="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-200 px-4 py-3 shadow-sm flex items-center justify-between">
             <h1 class="font-bold text-lg text-slate-900">Frame Extractor</h1>
             <div class="flex items-center space-x-1">
                 <span class="relative flex h-2 w-2">
@@ -85,18 +94,12 @@
         </div>
 
         <div class="p-4 pb-24 max-w-md mx-auto relative">
-            
-            <!-- ПЛЕЕР -->
             <div id="musicContainer" class="bg-black rounded-t-2xl overflow-hidden shadow-lg border-x border-t border-slate-800 relative min-h-[150px] z-10">
                 <div class="absolute inset-0 flex items-center justify-center text-slate-600 text-xs flex-col gap-2">
-                    <svg class="animate-spin h-5 w-5 text-slate-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    <span>Соединение с космосом...</span>
+                    <svg class="animate-spin h-5 w-5 text-slate-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                    <span>Соединение...</span>
                 </div>
             </div>
-            <!-- Доп. панель под плеером с прямой ссылкой -->
             <div class="bg-slate-900 rounded-b-2xl border-x border-b border-slate-800 p-2 flex justify-between items-center mb-6 shadow-lg">
                 <div class="text-[10px] text-slate-400 pl-2">TerraVibe — Запах моря</div>
                 <a id="externalLink" href="#" target="_blank" class="text-[10px] bg-slate-800 hover:bg-slate-700 text-blue-400 px-3 py-1 rounded-full transition-colors flex items-center gap-1">
@@ -105,14 +108,12 @@
                 </a>
             </div>
 
-            <!-- Подсказка "Жми Play" -->
             <div id="playHint" class="hidden flex items-center justify-center space-x-2 text-blue-600 text-xs font-bold mb-6 animate-pulse">
-                <span>👆 Если тишина — жми Play (даже 30 сек в зачет!)</span>
+                <span>👆 Если тишина — жми Play</span>
             </div>
 
-            <!-- Настройки -->
             <div class="bg-white rounded-xl p-4 shadow-sm mb-4">
-                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Настройки извлечения</h3>
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Настройки</h3>
                 <div class="flex flex-col gap-3">
                     <label class="flex items-center justify-between p-3 bg-slate-50 rounded-lg active:bg-slate-100 transition-colors cursor-pointer group">
                         <div class="flex items-center gap-3">
@@ -137,7 +138,6 @@
                 </div>
             </div>
 
-            <!-- Кнопка загрузки -->
             <div id="uploadBtn" class="bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white rounded-2xl p-8 text-center shadow-blue-200 shadow-xl cursor-pointer transition-transform active:scale-95 mb-6 relative overflow-hidden group">
                 <div class="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 <svg class="w-12 h-12 mx-auto mb-3 opacity-90 drop-shadow-md" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
@@ -146,22 +146,15 @@
                 <input type="file" id="fileInput" multiple accept="video/*" class="hidden">
             </div>
 
-            <!-- Секция для отображения результатов -->
             <div id="resultsArea" class="hidden pt-2">
-                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 text-center">Готово! 👇</h3>
-                <div id="resultsGrid" class="grid grid-cols-2 gap-3">
-                    <!-- Сюда упадут картинки -->
-                </div>
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 text-center">Результаты (Нажми для просмотра)</h3>
+                <div id="resultsGrid" class="grid grid-cols-2 gap-3"></div>
             </div>
 
-            <!-- Статус -->
-            <div id="statusArea" class="text-center text-xs text-slate-400 min-h-[20px] font-medium mt-4 pb-10">
-                Ожидание выбора файла...
-            </div>
+            <div id="statusArea" class="text-center text-xs text-slate-400 min-h-[20px] font-medium mt-4 pb-10">Ожидание выбора файла...</div>
         </div>
     </div>
 
-    <!-- Canvas -->
     <canvas id="canvas" class="hidden"></canvas>
 
     <script>
@@ -175,6 +168,13 @@
         const musicContainer = document.getElementById('musicContainer');
         const playHint = document.getElementById('playHint');
         const externalLink = document.getElementById('externalLink');
+        
+        // Modal elements
+        const imageModal = document.getElementById('imageModal');
+        const modalImage = document.getElementById('modalImage');
+        const closeModal = document.getElementById('closeModal');
+        const modalShareBtn = document.getElementById('modalShareBtn');
+        let currentShareFile = null;
 
         const YANDEX_TRACK_ID = '144325888';
         const YANDEX_ALBUM_ID = '38804247';
@@ -183,16 +183,13 @@
 
         startBtn.addEventListener('click', () => {
             if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('heavy');
-
             startScreen.style.opacity = '0';
             setTimeout(() => {
                 startScreen.style.display = 'none';
                 document.body.style.overflow = 'auto'; 
                 playHint.classList.remove('hidden');
             }, 500);
-
             mainApp.classList.remove('opacity-0');
-
             const iframe = document.createElement('iframe');
             iframe.style.border = 'none';
             iframe.style.width = '100%';
@@ -204,7 +201,6 @@
             musicContainer.appendChild(iframe);
         });
 
-        // --- ЛОГИКА ПРИЛОЖЕНИЯ ---
         const uploadBtn = document.getElementById('uploadBtn');
         const fileInput = document.getElementById('fileInput');
         const statusArea = document.getElementById('statusArea');
@@ -213,15 +209,12 @@
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
 
-        // Вспомогательная функция для конвертации DataURI в Blob
         function dataURItoBlob(dataURI) {
             var byteString = atob(dataURI.split(',')[1]);
             var mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
             var ab = new ArrayBuffer(byteString.length);
             var ia = new Uint8Array(ab);
-            for (var i = 0; i < byteString.length; i++) {
-                ia[i] = byteString.charCodeAt(i);
-            }
+            for (var i = 0; i < byteString.length; i++) { ia[i] = byteString.charCodeAt(i); }
             return new Blob([ab], {type: mimeString});
         }
 
@@ -240,7 +233,6 @@
             if (this.files.length > 0) {
                 resultsGrid.innerHTML = '';
                 resultsArea.classList.add('hidden');
-                
                 await processFiles(this.files);
                 this.value = ''; 
             }
@@ -249,23 +241,17 @@
         async function processFiles(files) {
             const saveFirst = document.getElementById('checkFirst').checked;
             const saveLast = document.getElementById('checkLast').checked;
-
             if (!saveFirst && !saveLast) {
                 setStatus("Выберите хотя бы одну опцию!", true);
                 if(tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
                 return;
             }
-
             resultsArea.classList.remove('hidden'); 
-            
-            setTimeout(() => {
-                resultsArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }, 100);
+            setTimeout(() => { resultsArea.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 100);
 
             for (let i = 0; i < files.length; i++) {
                 await processVideo(files[i], saveFirst, saveLast);
             }
-            
             setStatus("Все готово!");
             if(tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
         }
@@ -288,14 +274,11 @@
                         video.currentTime = 0.1;
                         await new Promise(r => video.onseeked = r);
                         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                        
                         const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
                         const blob = dataURItoBlob(dataUrl);
-                        // Создаем объект File для шеринга
                         const imageFile = new File([blob], `first_${baseName}.jpg`, { type: 'image/jpeg' });
                         const blobUrl = URL.createObjectURL(blob);
-                        
-                        displayResult(blobUrl, `Первый кадр: ${baseName}`, `first_${baseName}.jpg`, imageFile);
+                        displayResult(blobUrl, `Первый кадр`, imageFile);
                     }
 
                     if (saveLast) {
@@ -304,19 +287,15 @@
                         video.currentTime = targetTime;
                         await new Promise(r => video.onseeked = r);
                         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                        
                         const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
                         const blob = dataURItoBlob(dataUrl);
-                        // Создаем объект File для шеринга
                         const imageFile = new File([blob], `last_${baseName}.jpg`, { type: 'image/jpeg' });
                         const blobUrl = URL.createObjectURL(blob);
-                        
-                        displayResult(blobUrl, `Последний кадр: ${baseName}`, `last_${baseName}.jpg`, imageFile);
+                        displayResult(blobUrl, `Последний кадр`, imageFile);
                     }
                     URL.revokeObjectURL(video.src);
                     resolve();
                 };
-
                 video.onerror = function() {
                     setStatus(`Ошибка формата: ${file.name}`, true);
                     resolve();
@@ -324,63 +303,73 @@
             });
         }
 
-        // Функция для показа картинки на экране (ИСПРАВЛЕНА для Android)
-        function displayResult(blobUrl, title, filename, fileObject) {
+        function displayResult(blobUrl, title, fileObject) {
             const container = document.createElement('div');
-            container.className = 'bg-white p-2 rounded-lg shadow-sm border border-slate-200 flex flex-col items-center animate-bounce-x';
+            container.className = 'bg-white p-2 rounded-lg shadow-sm border border-slate-200 flex flex-col items-center animate-bounce-x active:scale-95 transition-transform cursor-pointer';
             container.style.animation = 'none'; 
             
             const img = document.createElement('img');
             img.src = blobUrl;
-            img.className = 'w-full h-auto rounded mb-2 object-cover aspect-video bg-slate-100 cursor-pointer';
-            
-            // Если нажать на картинку - открыть на весь экран (для сохранения долгим тапом)
-            img.onclick = () => {
-                tg.openLink(blobUrl); // Пробуем открыть в браузере
-            };
+            img.className = 'w-full h-auto rounded mb-2 object-cover aspect-video bg-slate-100 pointer-events-none'; // pointer-events-none чтобы клик шел на контейнер
             
             const label = document.createElement('div');
             label.className = 'text-[10px] text-slate-500 font-mono truncate w-full text-center';
             label.textContent = title;
 
-            // КНОПКА "ПОДЕЛИТЬСЯ" (Нативная Android штука)
-            // Это самое надежное на Андроиде - открывает системное меню "Кому отправить"
-            if (navigator.share && navigator.canShare && navigator.canShare({ files: [fileObject] })) {
-                const shareBtn = document.createElement('button');
-                shareBtn.className = 'mt-2 text-xs bg-blue-600 text-white py-2 px-3 rounded-xl w-full text-center font-bold active:scale-95 transition-transform flex items-center justify-center gap-1';
-                shareBtn.innerHTML = `
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
-                    Сохранить / Share
-                `;
-                shareBtn.onclick = async () => {
-                    try {
-                        await navigator.share({
-                            files: [fileObject],
-                            title: 'Кадр из видео',
-                            text: 'Сохранено через Frame Extractor'
-                        });
-                    } catch (err) {
-                        console.log('Share canceled', err);
-                    }
-                };
-                container.appendChild(img);
-                container.appendChild(label);
-                container.appendChild(shareBtn);
-            } else {
-                // Если шеринг не поддерживается (Старый андроид или ПК) - показываем старые кнопки
-                const saveBtn = document.createElement('a');
-                saveBtn.href = blobUrl;
-                saveBtn.download = filename;
-                saveBtn.className = 'mt-2 text-xs bg-blue-50 text-blue-600 py-2 px-3 rounded-xl w-full text-center font-bold active:bg-blue-100 block';
-                saveBtn.textContent = 'Скачать';
+            // Клик открывает модальное окно
+            container.onclick = () => {
+                openModal(blobUrl, fileObject);
+            };
 
-                container.appendChild(img);
-                container.appendChild(label);
-                container.appendChild(saveBtn);
-            }
-
+            container.appendChild(img);
+            container.appendChild(label);
             resultsGrid.appendChild(container);
         }
+
+        // --- ЛОГИКА МОДАЛЬНОГО ОКНА ---
+        function openModal(url, fileObj) {
+            modalImage.src = url;
+            currentShareFile = fileObj;
+            imageModal.classList.remove('hidden');
+            // Небольшая задержка для анимации opacity
+            setTimeout(() => {
+                imageModal.classList.remove('opacity-0');
+            }, 10);
+            
+            // Проверка поддержки share
+            if (navigator.share && navigator.canShare && navigator.canShare({ files: [fileObj] })) {
+                modalShareBtn.classList.remove('hidden');
+            } else {
+                modalShareBtn.classList.add('hidden');
+            }
+        }
+
+        function closeModalFunc() {
+            imageModal.classList.add('opacity-0');
+            setTimeout(() => {
+                imageModal.classList.add('hidden');
+                modalImage.src = '';
+            }, 300);
+        }
+
+        closeModal.addEventListener('click', closeModalFunc);
+        imageModal.addEventListener('click', (e) => {
+            if (e.target === imageModal) closeModalFunc();
+        });
+
+        modalShareBtn.addEventListener('click', async () => {
+            if (currentShareFile) {
+                try {
+                    await navigator.share({
+                        files: [currentShareFile],
+                        title: 'Кадр из видео',
+                        text: 'Frame Extractor'
+                    });
+                } catch (err) {
+                    console.log('Share canceled');
+                }
+            }
+        });
     </script>
 </body>
 </html>
