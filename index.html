@@ -46,7 +46,7 @@
                 Frame <br><span class="text-blue-500">Extractor</span>
             </h1>
             <div class="h-1 w-16 bg-blue-600 mx-auto mt-4 rounded-full"></div>
-            <p class="text-slate-500 text-xs font-mono mt-3 tracking-widest uppercase">Professional Tool v2.6</p>
+            <p class="text-slate-500 text-xs font-mono mt-3 tracking-widest uppercase">Professional Tool v2.7</p>
         </div>
 
         <!-- Блок Win-Win (Упрощенный текст) -->
@@ -70,7 +70,7 @@
 
 
     <!-- === ОСНОВНОЙ ИНТЕРФЕЙС === -->
-    <div id="mainApp" class="opacity-0 transition-opacity duration-700 min-h-screen">
+    <div id="mainApp" class="opacity-0 transition-opacity duration-700 min-h-screen overflow-y-auto">
         
         <!-- Верхняя шапка -->
         <div class="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-200 px-4 py-3 shadow-sm flex items-center justify-between">
@@ -146,8 +146,16 @@
                 <input type="file" id="fileInput" multiple accept="video/*" class="hidden">
             </div>
 
+            <!-- Секция для отображения результатов (НОВОЕ) -->
+            <div id="resultsArea" class="hidden">
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 text-center">Результаты (Нажми для сохранения)</h3>
+                <div id="resultsGrid" class="grid grid-cols-2 gap-3">
+                    <!-- Сюда упадут картинки -->
+                </div>
+            </div>
+
             <!-- Статус -->
-            <div id="statusArea" class="text-center text-xs text-slate-400 min-h-[20px] font-medium">
+            <div id="statusArea" class="text-center text-xs text-slate-400 min-h-[20px] font-medium mt-4">
                 Ожидание выбора файла...
             </div>
         </div>
@@ -171,7 +179,6 @@
         const YANDEX_TRACK_ID = '144325888';
         const YANDEX_ALBUM_ID = '38804247';
         
-        // Ссылка на "Полную версию" (Ведет на альбом в вебе, где можно залогиниться)
         externalLink.href = `https://music.yandex.ru/album/${YANDEX_ALBUM_ID}/track/${YANDEX_TRACK_ID}`;
 
         startBtn.addEventListener('click', () => {
@@ -192,10 +199,7 @@
             iframe.style.height = '150px';
             iframe.setAttribute('frameborder', '0');
             iframe.setAttribute('allow', 'autoplay; encrypted-media; fullscreen; clipboard-write; scripts');
-            
-            // Пробуем запустить
             iframe.src = `https://music.yandex.ru/iframe/album/${YANDEX_ALBUM_ID}/track/${YANDEX_TRACK_ID}?autoplay=1&play=true`;
-            
             musicContainer.innerHTML = '';
             musicContainer.appendChild(iframe);
         });
@@ -204,6 +208,8 @@
         const uploadBtn = document.getElementById('uploadBtn');
         const fileInput = document.getElementById('fileInput');
         const statusArea = document.getElementById('statusArea');
+        const resultsArea = document.getElementById('resultsArea');
+        const resultsGrid = document.getElementById('resultsGrid');
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
 
@@ -220,6 +226,10 @@
 
         fileInput.addEventListener('change', async function() {
             if (this.files.length > 0) {
+                // Очистка предыдущих результатов
+                resultsGrid.innerHTML = '';
+                resultsArea.classList.add('hidden');
+                
                 await processFiles(this.files);
                 this.value = ''; 
             }
@@ -235,10 +245,12 @@
                 return;
             }
 
+            resultsArea.classList.remove('hidden'); // Показываем блок результатов
+
             for (let i = 0; i < files.length; i++) {
                 await processVideo(files[i], saveFirst, saveLast);
             }
-            setStatus("Все готово! ✅");
+            setStatus("Все готово! Проверьте загрузки или сохраните фото ниже.");
             if(tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
         }
 
@@ -260,7 +272,13 @@
                         video.currentTime = 0.1;
                         await new Promise(r => video.onseeked = r);
                         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                        downloadImage(canvas, `first_${baseName}.jpg`);
+                        const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+                        
+                        // 1. Скачивание
+                        downloadImage(dataUrl, `first_${baseName}.jpg`);
+                        
+                        // 2. Отображение
+                        displayResult(dataUrl, `Первый кадр: ${baseName}`, `first_${baseName}.jpg`);
                     }
 
                     if (saveLast) {
@@ -269,7 +287,13 @@
                         video.currentTime = targetTime;
                         await new Promise(r => video.onseeked = r);
                         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                        downloadImage(canvas, `last_${baseName}.jpg`);
+                        const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+                        
+                        // 1. Скачивание
+                        downloadImage(dataUrl, `last_${baseName}.jpg`);
+                        
+                        // 2. Отображение
+                        displayResult(dataUrl, `Последний кадр: ${baseName}`, `last_${baseName}.jpg`);
                     }
                     URL.revokeObjectURL(video.src);
                     resolve();
@@ -282,11 +306,38 @@
             });
         }
 
-        function downloadImage(canvas, filename) {
+        function downloadImage(dataUrl, filename) {
             const link = document.createElement('a');
             link.download = filename;
-            link.href = canvas.toDataURL('image/jpeg', 0.9);
+            link.href = dataUrl;
             link.click();
+        }
+
+        // Функция для показа картинки на экране
+        function displayResult(dataUrl, title, filename) {
+            const container = document.createElement('div');
+            container.className = 'bg-white p-2 rounded-lg shadow-sm border border-slate-200 flex flex-col items-center animate-bounce-x';
+            container.style.animation = 'none'; // Сброс анимации, используем transition
+            
+            const img = document.createElement('img');
+            img.src = dataUrl;
+            img.className = 'w-full h-auto rounded mb-2 object-cover aspect-video bg-slate-100';
+            
+            const label = document.createElement('div');
+            label.className = 'text-[10px] text-slate-500 font-mono truncate w-full text-center';
+            label.textContent = title;
+
+            // Кнопка принудительного скачивания (если авто не сработало)
+            const saveBtn = document.createElement('a');
+            saveBtn.href = dataUrl;
+            saveBtn.download = filename;
+            saveBtn.className = 'mt-2 text-xs bg-blue-50 text-blue-600 py-1 px-3 rounded-full w-full text-center font-bold active:bg-blue-100';
+            saveBtn.textContent = 'Сохранить';
+
+            container.appendChild(img);
+            container.appendChild(label);
+            container.appendChild(saveBtn);
+            resultsGrid.appendChild(container);
         }
     </script>
 </body>
