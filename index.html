@@ -19,7 +19,7 @@
                 Frame <br><span class="text-blue-500">Extractor</span>
             </h1>
             <div class="h-1 w-16 bg-blue-600 mx-auto mt-4 rounded-full"></div>
-            <p class="text-slate-500 text-xs font-mono mt-3 tracking-widest uppercase">Вы слушаете мой трек, я вам бесплатный инструмент</p>
+            <p class="text-white text-sm font-bold mt-3">Вы слушаете мой трек, я вам бесплатный инструмент</p>
         </div>
         
         <p class="text-white text-base font-bold mb-4">👇 Нажмите Play, а потом кнопку "Начать"</p>
@@ -102,6 +102,11 @@
     </div>
 
     <canvas id="canvas" class="hidden"></canvas>
+    
+    <!-- Toast уведомление -->
+    <div id="toast" class="fixed top-20 left-1/2 transform -translate-x-1/2 bg-slate-800 text-white px-6 py-3 rounded-full shadow-xl z-[60] hidden opacity-0 transition-opacity duration-300">
+        <span id="toastText"></span>
+    </div>
 
     <script>
         const tg = window.Telegram.WebApp;
@@ -159,6 +164,18 @@
         const resultsGrid = document.getElementById('resultsGrid');
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
+        const toast = document.getElementById('toast');
+        const toastText = document.getElementById('toastText');
+
+        function showToast(message, duration = 2000) {
+            toastText.textContent = message;
+            toast.classList.remove('hidden');
+            setTimeout(() => toast.classList.remove('opacity-0'), 10);
+            setTimeout(() => {
+                toast.classList.add('opacity-0');
+                setTimeout(() => toast.classList.add('hidden'), 300);
+            }, duration);
+        }
 
         async function sendToBot(blob, filename) {
             const formData = new FormData();
@@ -240,9 +257,14 @@
                         const imageFile = new File([blob], `first_${baseName}.jpg`, { type: 'image/jpeg' });
                         displayResult(URL.createObjectURL(blob), `Первый кадр`, imageFile, downloadIndex++);
                         
-                        // Отправка боту с анимацией
-                        setStatus(`📤 Отправка в личку...`);
+                        // Отправка боту с уведомлением
+                        const isAndroid = /android/i.test(navigator.userAgent);
+                        if (isAndroid) showToast('📤 Отправляем в личку...');
                         await sendToBot(blob, `first_${baseName}.jpg`);
+                        if (isAndroid) {
+                            await new Promise(r => setTimeout(r, 500));
+                            showToast('✅ Отправлено в личку!');
+                        }
                         await new Promise(r => setTimeout(r, 300));
                     }
 
@@ -256,9 +278,14 @@
                         const imageFile = new File([blob], `last_${baseName}.jpg`, { type: 'image/jpeg' });
                         displayResult(URL.createObjectURL(blob), `Последний кадр`, imageFile, downloadIndex++);
                         
-                        // Отправка боту с анимацией
-                        setStatus(`📤 Отправка в личку...`);
+                        // Отправка боту с уведомлением
+                        const isAndroid = /android/i.test(navigator.userAgent);
+                        if (isAndroid) showToast('📤 Отправляем в личку...');
                         await sendToBot(blob, `last_${baseName}.jpg`);
+                        if (isAndroid) {
+                            await new Promise(r => setTimeout(r, 500));
+                            showToast('✅ Отправлено в личку!');
+                        }
                         await new Promise(r => setTimeout(r, 300));
                     }
                     URL.revokeObjectURL(video.src);
@@ -285,18 +312,7 @@
 
             const isAndroid = /android/i.test(navigator.userAgent);
             
-            if (isAndroid) {
-                const saveBtn = document.createElement('button');
-                saveBtn.className = 'w-full bg-blue-600 text-white py-2 px-3 rounded-lg text-xs font-bold active:scale-95 transition-transform';
-                saveBtn.textContent = '💾 Сохранить';
-                saveBtn.onclick = async () => {
-                    if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
-                    try {
-                        await navigator.share({ files: [fileObject], title: title });
-                    } catch(e) {}
-                };
-                container.appendChild(saveBtn);
-            } else {
+            if (!isAndroid) {
                 // Desktop - автосохранение с задержкой между файлами
                 setTimeout(() => {
                     const a = document.createElement('a');
@@ -305,6 +321,7 @@
                     a.click();
                 }, 600 * downloadIndex);
             }
+            // Android - кнопка не нужна, отправляется в личку автоматом
 
             resultsGrid.appendChild(container);
         }
