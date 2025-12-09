@@ -39,17 +39,12 @@
             <div class="h-1 w-16 bg-blue-600 mx-auto mt-4 rounded-full"></div>
             <p class="text-slate-500 text-xs font-mono mt-3 tracking-widest uppercase">Professional Tool v3.0</p>
         </div>
-        <div class="mb-6 max-w-xs bg-slate-800/50 p-5 rounded-2xl backdrop-blur-sm border border-slate-700/50">
-            <h2 class="text-xl font-bold text-white mb-3">Win-Win 🤝</h2>
-            <div class="text-slate-300 text-xs bg-slate-900/80 p-3 rounded-xl border border-slate-700/50 text-left">
-                🎧 <span class="font-bold text-white">Просто послушайте трек.</span><br>
-                Мы включим музыку фоном, пока вы работаете с видео.
-            </div>
+        
+        <p class="text-white text-lg font-bold mb-6">👇 Нажмите Play чтобы начать</p>
+        
+        <div id="musicContainerStart" class="relative w-full max-w-md">
+            <!-- Iframe будет здесь -->
         </div>
-        <button id="startBtn" class="bg-blue-600 text-white rounded-full w-20 h-20 flex items-center justify-center shadow-2xl shadow-blue-500/50 pulse-btn active:scale-95 transition-transform mt-2">
-            <svg class="w-8 h-8 ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-        </button>
-        <p class="text-slate-500 text-[10px] mt-6 uppercase tracking-widest opacity-60">Нажмите Play</p>
     </div>
 
     <!-- === ОСНОВНОЙ ИНТЕРФЕЙС === -->
@@ -136,7 +131,7 @@
 
         const startScreen = document.getElementById('startScreen');
         const mainApp = document.getElementById('mainApp');
-        const startBtn = document.getElementById('startBtn');
+        const musicContainerStart = document.getElementById('musicContainerStart');
         const musicContainer = document.getElementById('musicContainer');
         const playHint = document.getElementById('playHint');
         const externalLink = document.getElementById('externalLink');
@@ -146,24 +141,61 @@
         
         externalLink.href = `https://music.yandex.ru/album/${YANDEX_ALBUM_ID}/track/${YANDEX_TRACK_ID}`;
 
-        startBtn.addEventListener('click', () => {
-            if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('heavy');
-            startScreen.style.opacity = '0';
-            setTimeout(() => {
-                startScreen.style.display = 'none';
-                document.body.style.overflow = 'auto'; 
-                playHint.classList.remove('hidden');
-            }, 500);
-            mainApp.classList.remove('opacity-0');
+        // Загружаем iframe сразу на start screen
+        window.addEventListener('load', () => {
             const iframe = document.createElement('iframe');
             iframe.style.border = 'none';
             iframe.style.width = '100%';
-            iframe.style.height = '150px';
+            iframe.style.height = '244px';
             iframe.setAttribute('frameborder', '0');
             iframe.setAttribute('allow', 'autoplay; encrypted-media; fullscreen; clipboard-write; scripts');
-            iframe.src = `https://music.yandex.ru/iframe/album/${YANDEX_ALBUM_ID}/track/${YANDEX_TRACK_ID}?autoplay=1&play=true`;
-            musicContainer.innerHTML = '';
-            musicContainer.appendChild(iframe);
+            iframe.src = `https://music.yandex.ru/iframe/album/${YANDEX_ALBUM_ID}/track/${YANDEX_TRACK_ID}`;
+            
+            // Overlay с дыркой под Play
+            const overlay = document.createElement('div');
+            overlay.style.position = 'absolute';
+            overlay.style.top = '0';
+            overlay.style.left = '0';
+            overlay.style.width = '100%';
+            overlay.style.height = '100%';
+            overlay.style.background = 'rgba(15, 23, 42, 0.95)';
+            overlay.style.pointerEvents = 'none';
+            overlay.style.zIndex = '10';
+            
+            // Дырка под кнопку Play (примерно центр-право)
+            const hole = document.createElement('div');
+            hole.style.position = 'absolute';
+            hole.style.top = '50%';
+            hole.style.left = '50%';
+            hole.style.transform = 'translate(-50%, -50%)';
+            hole.style.width = '80px';
+            hole.style.height = '80px';
+            hole.style.borderRadius = '50%';
+            hole.style.boxShadow = '0 0 0 999px rgba(15, 23, 42, 0.95)';
+            hole.style.pointerEvents = 'auto';
+            overlay.appendChild(hole);
+            
+            musicContainerStart.appendChild(iframe);
+            musicContainerStart.appendChild(overlay);
+            
+            // Через 5 секунд убираем overlay и показываем основной интерфейс
+            setTimeout(() => {
+                overlay.style.transition = 'opacity 0.5s';
+                overlay.style.opacity = '0';
+                setTimeout(() => {
+                    startScreen.style.opacity = '0';
+                    setTimeout(() => {
+                        startScreen.style.display = 'none';
+                        document.body.style.overflow = 'auto';
+                    }, 500);
+                    mainApp.classList.remove('opacity-0');
+                    
+                    // Копируем iframe в основной контейнер
+                    const mainIframe = iframe.cloneNode(true);
+                    musicContainer.innerHTML = '';
+                    musicContainer.appendChild(mainIframe);
+                }, 500);
+            }, 5000);
         });
 
         const uploadBtn = document.getElementById('uploadBtn');
